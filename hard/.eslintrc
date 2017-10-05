@@ -1,0 +1,16 @@
+{
+  "extends": [
+
+  ],
+  "plugins": [
+
+  ],
+  "env": {
+    "node": true
+  },
+  "ecmaFeatures": {
+  },
+  "rules": {
+
+  }
+}
