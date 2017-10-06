@@ -18,7 +18,25 @@ var users = [
     accLocked: false,
     authenticated: false
   }
-]
+];
+const schema = {
+  properties: {
+    cardNumber: {
+      description: 'Please enter your 8 digit card number:',
+      required: true,
+      pattern: /^(\d{8})$/,
+      message: '8 digits only'
+    },
+    pin: {
+      description: 'Please enter your 4 digit pin',
+      pattern: /^(\d{4})$/,
+      message: '4 digit pin only',
+      hidden: true,
+      replace: '*',
+      required: true
+    },
+  },
+};
 
 prompt.start(); // Lets you prompt the user for info
 
@@ -26,7 +44,7 @@ prompt.start(); // Lets you prompt the user for info
 
 
 // Prompt (which is Async) works like this:
-prompt.get(['username', 'password'], function(err, result) {
+prompt.get(schema, function(err, result) {
     if (err) { // Handle error
         return err;
     }
