@@ -15,11 +15,31 @@ const schema = {
             pin: {
                 description: colors.green('Please enter your 4 digit pin'),
                 pattern: /^(\d{4})$/,
-                message: colors.bgRed('4 digit pin only'),
+                message: colors.red('4 digit pin only'),
                 hidden: true,
                 replace: '*',
                 required: true
             },
+        }
+    },
+    service: {
+        properties: {
+            service: {
+                description: colors.green('Please enter a choice'),
+                pattern: /^(0|1|2)$/,
+                message: colors.red('1 of the options please'),
+                require: true
+            }
+        }
+    },
+    withdraw: {
+        properties: {
+            amount: {
+                description: colors.green('Please enter an amount'),
+                type: number,
+                required: true
+
+            }
         }
     }
 }
