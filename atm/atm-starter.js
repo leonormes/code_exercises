@@ -4,7 +4,7 @@ var prompt = require('prompt');
 var users = [
   {
     name: 'Leon',
-    card_number: 01234567,
+    card_number: 51234567,
     pin: 3324,
     balance: 1433,
     accLocked: false,
@@ -48,5 +48,7 @@ prompt.get(schema, function(err, result) {
     if (err) { // Handle error
         return err;
     }
+    let cn = R.find(R.propEq('card_number', parseInt(result.cardNumber)))(users);
+    console.log(cn);
 
 });
