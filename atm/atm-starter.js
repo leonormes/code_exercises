@@ -1,8 +1,7 @@
 var R = require('ramda'); // Helps with {}s and []s http://ramdajs.com/docs/#find
 var prompt = require('prompt');
 
-var users = [
-  {
+var users = [{
     name: 'Leon',
     card_number: 51234567,
     pin: 3324,
@@ -37,18 +36,23 @@ const schema = {
     },
   },
 };
-
-prompt.start(); // Lets you prompt the user for info
-
-// Dummy Users
-
-
-// Prompt (which is Async) works like this:
-prompt.get(schema, function(err, result) {
+init();
+function init() {
+  prompt.start();
+  prompt.get(schema, function (err, result) {
     if (err) { // Handle error
-        return err;
+      return err;
     }
-    let cn = R.find(R.propEq('card_number', parseInt(result.cardNumber)))(users);
-    console.log(cn);
+    validateCard(result);
+  });
+};
 
-});
+function validateCard(result) {
+  let cn = R.find(R.propEq('card_number', parseInt(result.cardNumber)))(users);
+  if(cn === undefined) {
+    console.log('Unknown card');
+    init();
+  } else {
+    validatePin();
+  }
+}
