@@ -1,7 +1,7 @@
 
 const users = [{
         name: 'Leon',
-        card_number: 51234567,
+        cardNumber: 51234567,
         pin: 3324,
         balance: 1433,
         accLocked: false,
@@ -9,7 +9,7 @@ const users = [{
     },
     {
         name: 'Toby',
-        card_number: 88875654,
+        cardNumber: 88875654,
         pin: 1232,
         balance: 133,
         accLocked: false,

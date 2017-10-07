@@ -1,39 +1,26 @@
-var R = require('ramda'); // Helps with {}s and []s http://ramdajs.com/docs/#find
-var prompt = require('prompt');
+const R = require('ramda'); // Helps with {}s and []s http://ramdajs.com/docs/#find
+const prompt = require('prompt');
+const colors = require("colors/safe");
 const users = require('./usersObject');
+const schema = require('./schema');
+
+prompt.message = null;
+prompt.delimiter = colors.green(":");
 
 let currentUser = {};
-const card = {
-    properties: {
-        cardNumber: {
-            description: 'Please enter your 8 digit card number:',
-            required: true,
-            pattern: /^(\d{8})$/,
-            message: '8 digits only'
-        }
-    }
-}
-const pin = {
-    properties: {
-        pin: {
-            description: 'Please enter your 4 digit pin',
-            pattern: /^(\d{4})$/,
-            message: '4 digit pin only',
-            hidden: true,
-            replace: '*',
-            required: true
-        },
-    }
-}
-getNumber(card)
+
+getUserInput(schema.card)
     .then((cardNumber) => {
-        validateCard(cardNumber)
+        findUser(cardNumber)
     })
-    getNumber(pin).then((pinNumber) => {
-        validatePin(pinNumber)
+    .then(() => {
+        getUserInput(schema.pin)
+        .then((pin) => {
+            validatePin(pin)
+        })
     })
 
-function getNumber(type) {
+function getUserInput(type) {
     return new Promise((resolve, reject) => {
         prompt.start();
         prompt.get(type, function (err, result) {
@@ -45,17 +32,23 @@ function getNumber(type) {
     })
 }
 
-function validateCard(result) {
-    let cn = R.find(R.propEq('card_number', parseInt(result.cardNumber)))(users);
-    if (cn === undefined) {
-        console.log('Unknown card');
-        getNumber(card);
+function findUser(cardNumber) {
+    let user = R.find(R.propEq('cardNumber', parseInt(cardNumber.cardNumber)))(users);
+    if (user === undefined) {
+        console.log(colors.red('Unknown card'));
+        getUserInput(schema.card);
     } else {
-        currentUser = cn;
+        currentUser = user;
         return;
     }
 }
 
 function validatePin(pin) {
-    console.log(pin)
+    if(currentUser.pin === parseInt(pin.pin)) {
+        currentUser.authenticated = true
+    } else {
+        console.log(colors.red('Pin incorrect'))
+        getUserInput(schema.pin)
+
+    }
 }
