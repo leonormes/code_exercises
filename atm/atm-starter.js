@@ -2,6 +2,7 @@ var R = require('ramda'); // Helps with {}s and []s http://ramdajs.com/docs/#fin
 var prompt = require('prompt');
 const users = require('./usersObject');
 
+let currentUser = {};
 const card = {
     properties: {
         cardNumber: {
@@ -24,24 +25,37 @@ const pin = {
         },
     }
 }
-init();
+getNumber(card)
+    .then((cardNumber) => {
+        validateCard(cardNumber)
+    })
+    getNumber(pin).then((pinNumber) => {
+        validatePin(pinNumber)
+    })
 
-function init() {
-    prompt.start();
-    prompt.get(card, function (err, result) {
-        if (err) { // Handle error
-            return err;
-        }
-        return parseInt(result);
-    }).then(validatePin());
-};
+function getNumber(type) {
+    return new Promise((resolve, reject) => {
+        prompt.start();
+        prompt.get(type, function (err, result) {
+            if (err) {
+                reject(err);
+            }
+            resolve(result);
+        })
+    })
+}
 
 function validateCard(result) {
     let cn = R.find(R.propEq('card_number', parseInt(result.cardNumber)))(users);
     if (cn === undefined) {
         console.log('Unknown card');
-        init();
+        getNumber(card);
     } else {
+        currentUser = cn;
         return;
     }
+}
+
+function validatePin(pin) {
+    console.log(pin)
 }
