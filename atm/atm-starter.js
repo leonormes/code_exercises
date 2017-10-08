@@ -12,6 +12,7 @@ let currentUser = {};
 const choices = {
     '0': function exit() {
         console.log(colors.magenta('Goodbye ' + currentUser.name));
+        setBalanceOnDB();
         init()
     },
     '1': function displayBalance() {
@@ -25,17 +26,17 @@ const choices = {
     },
     '2': function withdrawCash() {
         if(currentUser.authenticated) {
-          getUserInput()
+          getUserInput(schema.withdraw)
           .then((amount) => {
             if(!checkBalance(amount)) {
               console.log(colors.red('You do not have enough funds available for this transaction'));
-              getUserChoice();
             } else {
-              currentUser
+              currentUser.balance -= amount.amount;
+              console.log('your new balance is £' + currentUser.balance);
             }
+              getUserChoice();
           })
 
-        getUserChoice();
     } else {
         console.log(colors.red('You need to re-authenticate'))
         init();
@@ -103,5 +104,11 @@ function validatePin(pin) {
 }
 
 function checkBalance(requestedAmount) {
-  return requestedAmount < currentUser.balance;
+  return requestedAmount.amount < currentUser.balance;
+}
+
+function setBalanceOnDB() {
+  const dbref = R.findIndex(R.propEq('cardNumber', currentUser.cardNumber))(users);
+  currentUser.balance = users[dbref].balance
+  return;
 }
