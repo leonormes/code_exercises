@@ -16,31 +16,31 @@ const choices = {
         init()
     },
     '1': function displayBalance() {
-        if(currentUser.authenticated) {
-        console.log(colors.magenta('Your current balance is £' + currentUser.balance))
-        getUserChoice();
-    } else {
-        console.log(colors.red('You need to re-authenticate'))
-        init();
-    }
+        if (currentUser.authenticated) {
+            console.log(colors.magenta('Your current balance is £' + currentUser.balance))
+            getUserChoice();
+        } else {
+            console.log(colors.red('You need to re-authenticate'))
+            init();
+        }
     },
     '2': function withdrawCash() {
-        if(currentUser.authenticated) {
-          getUserInput(schema.withdraw)
-          .then((amount) => {
-            if(!checkBalance(amount)) {
-              console.log(colors.red('You do not have enough funds available for this transaction'));
-            } else {
-              currentUser.balance -= amount.amount;
-              console.log(colors.magenta('Your new balance is £' + currentUser.balance));
-            }
-              getUserChoice();
-          })
+        if (currentUser.authenticated) {
+            getUserInput(schema.withdraw)
+                .then((amount) => {
+                    if (!checkBalance(amount)) {
+                        console.log(colors.red('You do not have enough funds available for this transaction'));
+                    } else {
+                        currentUser.balance -= amount.amount;
+                        console.log(colors.magenta('Your new balance is £' + currentUser.balance));
+                    }
+                    getUserChoice();
+                })
 
-    } else {
-        console.log(colors.red('You need to re-authenticate'))
-        init();
-    }
+        } else {
+            console.log(colors.red('You need to re-authenticate'))
+            init();
+        }
     },
 }
 
@@ -53,13 +53,10 @@ function init() {
             findUser(cardNumber)
         })
         .then(() => {
-            getUserInput(schema.pin)
-                .then((pin) => {
-                    validatePin(pin)
-                })
-                .then(() => {
-                    getUserChoice(currentUser);
-                })
+            getUserPin()
+        .then(() => {
+            getUserChoice(currentUser);
+        })
         })
         .catch((err) => {
             console.log(err)
@@ -80,10 +77,10 @@ function getUserInput(type) {
         prompt.start();
         prompt.get(type, function (err, result) {
             if (err) {
-            reject(err);
+                reject(err);
             } else {
-            resolve(result);
-        }
+                resolve(result);
+            }
         })
     })
 }
@@ -99,6 +96,13 @@ function findUser(cardNumber) {
     }
 }
 
+function getUserPin() {
+    getUserInput(schema.pin)
+        .then((pin) => {
+            validatePin(pin)
+        })
+}
+
 function validatePin(pin) {
     if (currentUser.pin === parseInt(pin.pin)) {
         currentUser.authenticated = true
@@ -108,11 +112,11 @@ function validatePin(pin) {
 }
 
 function checkBalance(requestedAmount) {
-  return requestedAmount.amount < currentUser.balance;
+    return requestedAmount.amount < currentUser.balance;
 }
 
 function setBalanceOnDB() {
-  const dbref = R.findIndex(R.propEq('cardNumber', currentUser.cardNumber))(users);
-  currentUser.balance = users[dbref].balance
-  return;
+    const dbref = R.findIndex(R.propEq('cardNumber', currentUser.cardNumber))(users);
+    currentUser.balance = users[dbref].balance
+    return;
 }
