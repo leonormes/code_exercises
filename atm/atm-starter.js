@@ -25,6 +25,15 @@ const choices = {
     },
     '2': function withdrawCash() {
         if(currentUser.authenticated) {
+          getUserInput()
+          .then((amount) => {
+            if(!checkBalance(amount)) {
+              console.log(colors.red('You do not have enough funds available for this transaction'));
+              getUserChoice();
+            } else {
+              currentUser
+            }
+          })
 
         getUserChoice();
     } else {
@@ -91,4 +100,8 @@ function validatePin(pin) {
         getUserInput(schema.pin)
 
     }
+}
+
+function checkBalance(requestedAmount) {
+  return requestedAmount < currentUser.balance;
 }

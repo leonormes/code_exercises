@@ -36,7 +36,6 @@ const schema = {
         properties: {
             amount: {
                 description: colors.green('Please enter an amount'),
-                type: number,
                 required: true
 
             }
