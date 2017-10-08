@@ -76,8 +76,10 @@ function getUserInput(type) {
         prompt.get(type, function (err, result) {
             if (err) {
                 reject(err);
+                prompt.stop();
             }
             resolve(result);
+            prompt.stop();
         })
     })
 }
