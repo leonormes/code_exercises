@@ -57,7 +57,6 @@ const choices = {
 
 
 function loop() {
-  console.log('Start loop state =', state)
   prompt.start();
   switch (state.stage) {
     case 0:
