@@ -7,17 +7,28 @@ const schema = require('./schema');
 prompt.message = null;
 prompt.delimiter = colors.green(":");
 
-let currentUser = {};
+const state = {
+  currentUser: {},
+  stage: 0,
+  attempts: 0,
+  cardNo: null,
+  pin: null
+}
 
 const choices = {
   '0': function exit() {
-    console.log(colors.magenta('Goodbye ' + currentUser.name));
+    console.log(colors.magenta('Goodbye ' + state.currentUser.name));
     setBalanceOnDB();
-    init()
+    state.currentUser = {};
+    state.stage = 0
+    state.attempts = 0;
+    state.cardNo = null;
+    state.pin = null;
+    loop()
   },
   '1': function displayBalance() {
-    if (currentUser.authenticated) {
-      console.log(colors.magenta('Your current balance is £' + currentUser.balance))
+    if (state.currentUser.authenticated) {
+      console.log(colors.magenta('Your current balance is £' + state.currentUser.balance))
       getUserChoice();
     } else {
       console.log(colors.red('You need to re-authenticate'))
@@ -25,14 +36,14 @@ const choices = {
     }
   },
   '2': function withdrawCash() {
-    if (currentUser.authenticated) {
+    if (state.currentUser.authenticated) {
       getUserInput(schema.withdraw)
         .then((amount) => {
           if (!checkBalance(amount)) {
             console.log(colors.red('You do not have enough funds available for this transaction'));
           } else {
-            currentUser.balance -= amount.amount;
-            console.log(colors.magenta('Your new balance is £' + currentUser.balance));
+            state.currentUser.balance -= amount.amount;
+            console.log(colors.magenta('Your new balance is £' + state.currentUser.balance));
           }
           getUserChoice();
         })
@@ -44,27 +55,57 @@ const choices = {
   },
 }
 
-init()
 
-function init() {
-  currentUser = {};
-  getUserInput(schema.card)
-    .then((cardNumber) => {
-      findUser(cardNumber)
-    })
-    .then(() => {
+function loop() {
+  console.log('Start loop state =', state)
+  prompt.start();
+  switch (state.stage) {
+    case 0:
+      getUserInput(schema.card)
+        .then((cardNumber) => {
+          state.cardNo = parseInt(cardNumber.cardNumber);
+          state.stage = 1;
+          return loop();
+        })
+      break;
+    case 1:
       getUserInput(schema.pin)
         .then((pin) => {
-          validatePin(pin)
+          state.pin = parseInt(pin.pin);
+          state.stage = 2;
+          return loop();
         })
-    })
-    .then(() => {
-      getUserChoice(currentUser);
-    })
-    .catch((err) => {
-      console.log(err)
-      return init();
-    })
+      break;
+
+    case 2:
+      //Validate the card and input
+      findUser(state.cardNo)
+        .then((userData) => {
+          return validatePin(userData, state.pin);
+        }).then((userData) => {
+          state.currentUser = userData;
+          state.stage = 3;
+          return loop();
+        })
+        .catch((e) => {
+          console.log(colors.red("Incorrect card or pin number", e));
+          failedAuth();
+          return loop();
+        });
+      break;
+    case 3:
+      getUserChoice();
+    default:
+      break;
+  }
+}
+
+function failedAuth() {
+
+  state.stage = 0
+  state.attempts++;
+  state.cardNo = null;
+  state.pin = null;
 }
 
 function getUserChoice() {
@@ -77,43 +118,53 @@ function getUserChoice() {
 
 function getUserInput(type) {
   return new Promise((resolve, reject) => {
-    prompt.start();
     prompt.get(type, function (err, result) {
       if (err) {
-        reject(err);
+        return reject(err);
       } else {
-        resolve(result);
+        return resolve(result);
       }
     })
   })
 }
 
 function findUser(cardNumber) {
-  let user = R.find(R.propEq('cardNumber', parseInt(cardNumber.cardNumber)))(users);
-  if (user === undefined) {
-    // console.log(colors.red('Unknown card'));
-    throw colors.red('Error: Unknown Card');
-  } else {
-    currentUser = user;
-    return;
-  }
+  return new Promise((resolve, reject) => {
+    let user = R.find(R.propEq('cardNumber', cardNumber))(users);
+    if (user === undefined) {
+      return reject(colors.red('Error: Unknown Card'));
+    } else {
+      return resolve(user);
+    }
+  });
 }
 
-function validatePin(pin) {
-  if (currentUser.pin === parseInt(pin.pin)) {
-    currentUser.authenticated = true
-    return;
-  } else {
-    throw colors.red('Pin Incorrect')
-  }
+function getUserPin(userData) {
+  return getUserInput(schema.pin)
+    .then((pin) => {
+      validatePin(pin)
+    })
+}
+
+function validatePin(user, pin) {
+  return new Promise((resolve, reject) => {
+    if (user.pin === parseInt(pin)) {
+      user.authenticated = true;
+      resolve(user);
+    } else {
+      reject(colors.red('Pin Incorrect'));
+    }
+  });
 }
 
 function checkBalance(requestedAmount) {
-  return requestedAmount.amount < currentUser.balance;
+  return requestedAmount.amount < state.currentUser.balance;
 }
 
 function setBalanceOnDB() {
-  const dbref = R.findIndex(R.propEq('cardNumber', currentUser.cardNumber))(users);
-  currentUser.balance = users[dbref].balance
+  const dbref = R.findIndex(R.propEq('cardNumber', state.currentUser.cardNumber))(users);
+  state.currentUser.balance = users[dbref].balance
   return;
 }
+
+loop()
