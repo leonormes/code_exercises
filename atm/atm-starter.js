@@ -58,8 +58,16 @@ function loop() {
 		case 0:
 			getUserInput(schema.card)
 				.then((cardNumber) => {
+					return findUser(parseInt(cardNumber.cardNumber))
+				})
+				.then((cardNumber) => {
 					state.cardNo = parseInt(cardNumber.cardNumber);
 					state.stage = 1;
+					return loop();
+				})
+				.catch((err) => {
+					console.log(err);
+					resetState();
 					return loop();
 				})
 			break;
@@ -77,13 +85,14 @@ function loop() {
 			findUser(state.cardNo)
 				.then((userData) => {
 					return validatePin(userData, state.pin);
-				}).then((userData) => {
+				})
+				.then((userData) => {
 					state.currentUser = userData;
 					state.stage = 3;
 					return loop();
 				})
 				.catch((e) => {
-					console.log(colors.red("Incorrect card or pin number", e));
+					console.log(colors.red("Incorrect pin number", e));
 					failedAuth();
 					return loop();
 				});
